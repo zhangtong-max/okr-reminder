@@ -1,0 +1,606 @@
+{
+  "regions": [
+    {
+      "id": "liaojilin",
+      "name": "辽吉黑",
+      "owner": "陈长奎",
+      "sub_people": [
+        {
+          "name": "陈长奎",
+          "account": "陈长奎",
+          "done": false
+        }
+      ],
+      "branches": [
+        {
+          "id": "data_targets",
+          "name": "数据及目标",
+          "items": [
+            {
+              "id": "ljl_d1",
+              "name": "转介绍",
+              "done": false
+            },
+            {
+              "id": "ljl_d2",
+              "name": "985目标",
+              "done": false
+            },
+            {
+              "id": "ljl_d3",
+              "name": "大吨位货梯目标",
+              "done": false
+            },
+            {
+              "id": "ljl_d4",
+              "name": "僵尸客户沟通",
+              "done": false
+            },
+            {
+              "id": "ljl_d5",
+              "name": "生效计划数据",
+              "done": false
+            },
+            {
+              "id": "ljl_d6",
+              "name": "发运计划数据",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "destocking",
+          "name": "去库存进展",
+          "items": [
+            {
+              "id": "ljl_a1",
+              "name": "去库存进展",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "training",
+          "name": "培训目标",
+          "items": [
+            {
+              "id": "ljl_b1",
+              "name": "培训目标",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "difficulties",
+          "name": "每天遇到的困难",
+          "items": [
+            {
+              "id": "ljl_c1",
+              "name": "每天遇到的困难",
+              "done": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shandong_west",
+      "name": "鲁西",
+      "owner": "张端平",
+      "sub_people": [
+        {
+          "name": "张端平",
+          "account": "张端平",
+          "done": false
+        }
+      ],
+      "branches": [
+        {
+          "id": "data_targets",
+          "name": "数据及目标",
+          "items": [
+            {
+              "id": "sd_w_d1",
+              "name": "转介绍",
+              "done": false
+            },
+            {
+              "id": "sd_w_d2",
+              "name": "985目标",
+              "done": false
+            },
+            {
+              "id": "sd_w_d3",
+              "name": "大吨位货梯目标",
+              "done": false
+            },
+            {
+              "id": "sd_w_d4",
+              "name": "僵尸客户沟通",
+              "done": false
+            },
+            {
+              "id": "sd_w_d5",
+              "name": "生效计划数据",
+              "done": false
+            },
+            {
+              "id": "sd_w_d6",
+              "name": "发运计划数据",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "destocking",
+          "name": "去库存进展",
+          "items": [
+            {
+              "id": "sd_w_a1",
+              "name": "去库存进展",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "training",
+          "name": "培训目标",
+          "items": [
+            {
+              "id": "sd_w_b1",
+              "name": "培训目标",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "difficulties",
+          "name": "每天遇到的困难",
+          "items": [
+            {
+              "id": "sd_w_c1",
+              "name": "每天遇到的困难",
+              "done": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jiyu",
+      "name": "冀豫",
+      "owner": "边钢",
+      "sub_people": [
+        {
+          "name": "边钢",
+          "account": "边钢",
+          "done": false
+        }
+      ],
+      "branches": [
+        {
+          "id": "data_targets",
+          "name": "数据及目标",
+          "items": [
+            {
+              "id": "jy_d1",
+              "name": "转介绍",
+              "done": false
+            },
+            {
+              "id": "jy_d2",
+              "name": "985目标",
+              "done": false
+            },
+            {
+              "id": "jy_d3",
+              "name": "大吨位货梯目标",
+              "done": false
+            },
+            {
+              "id": "jy_d4",
+              "name": "僵尸客户沟通",
+              "done": false
+            },
+            {
+              "id": "jy_d5",
+              "name": "生效计划数据",
+              "done": false
+            },
+            {
+              "id": "jy_d6",
+              "name": "发运计划数据",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "destocking",
+          "name": "去库存进展",
+          "items": [
+            {
+              "id": "jy_a1",
+              "name": "去库存进展",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "training",
+          "name": "培训目标",
+          "items": [
+            {
+              "id": "jy_b1",
+              "name": "培训目标",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "difficulties",
+          "name": "每天遇到的困难",
+          "items": [
+            {
+              "id": "jy_c1",
+              "name": "每天遇到的困难",
+              "done": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shanxi",
+      "name": "山西",
+      "owner": "刘锋",
+      "sub_people": [
+        {
+          "name": "刘锋",
+          "account": "刘锋",
+          "done": false
+        }
+      ],
+      "branches": [
+        {
+          "id": "data_targets",
+          "name": "数据及目标",
+          "items": [
+            {
+              "id": "sx_d1",
+              "name": "转介绍",
+              "done": false
+            },
+            {
+              "id": "sx_d2",
+              "name": "985目标",
+              "done": false
+            },
+            {
+              "id": "sx_d3",
+              "name": "大吨位货梯目标",
+              "done": false
+            },
+            {
+              "id": "sx_d4",
+              "name": "僵尸客户沟通",
+              "done": false
+            },
+            {
+              "id": "sx_d5",
+              "name": "生效计划数据",
+              "done": false
+            },
+            {
+              "id": "sx_d6",
+              "name": "发运计划数据",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "destocking",
+          "name": "去库存进展",
+          "items": [
+            {
+              "id": "sx_a1",
+              "name": "去库存进展",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "training",
+          "name": "培训目标",
+          "items": [
+            {
+              "id": "sx_b1",
+              "name": "培训目标",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "difficulties",
+          "name": "每天遇到的困难",
+          "items": [
+            {
+              "id": "sx_c1",
+              "name": "每天遇到的困难",
+              "done": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shandong_east_neimeng",
+      "name": "鲁东/内蒙",
+      "owner": "张通",
+      "sub_people": [
+        {
+          "name": "鲁泽川",
+          "account": "鲁泽川",
+          "done": false
+        },
+        {
+          "name": "张仁杰",
+          "account": "张仁杰",
+          "done": false
+        },
+        {
+          "name": "常宁",
+          "account": "常宁",
+          "done": false
+        },
+        {
+          "name": "赵小明",
+          "account": "赵小明",
+          "done": false
+        }
+      ],
+      "branches": [
+        {
+          "id": "data_targets",
+          "name": "数据及目标",
+          "items": [
+            {
+              "id": "sd_e_d1",
+              "name": "转介绍",
+              "done": false
+            },
+            {
+              "id": "sd_e_d2",
+              "name": "985目标",
+              "done": false
+            },
+            {
+              "id": "sd_e_d3",
+              "name": "大吨位货梯目标",
+              "done": false
+            },
+            {
+              "id": "sd_e_d4",
+              "name": "僵尸客户沟通",
+              "done": false
+            },
+            {
+              "id": "sd_e_d5",
+              "name": "生效计划数据",
+              "done": false
+            },
+            {
+              "id": "sd_e_d6",
+              "name": "发运计划数据",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "destocking",
+          "name": "去库存进展",
+          "items": [
+            {
+              "id": "sd_e_a1",
+              "name": "去库存进展",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "training",
+          "name": "培训目标",
+          "items": [
+            {
+              "id": "sd_e_b1",
+              "name": "培训目标",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "difficulties",
+          "name": "每天遇到的困难",
+          "items": [
+            {
+              "id": "sd_e_c1",
+              "name": "每天遇到的困难",
+              "done": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ganqingning",
+      "name": "甘青宁",
+      "owner": "康银善",
+      "sub_people": [
+        {
+          "name": "康银善",
+          "account": "康银善",
+          "done": false
+        }
+      ],
+      "branches": [
+        {
+          "id": "data_targets",
+          "name": "数据及目标",
+          "items": [
+            {
+              "id": "gqn_d1",
+              "name": "转介绍",
+              "done": false
+            },
+            {
+              "id": "gqn_d2",
+              "name": "985目标",
+              "done": false
+            },
+            {
+              "id": "gqn_d3",
+              "name": "大吨位货梯目标",
+              "done": false
+            },
+            {
+              "id": "gqn_d4",
+              "name": "僵尸客户沟通",
+              "done": false
+            },
+            {
+              "id": "gqn_d5",
+              "name": "生效计划数据",
+              "done": false
+            },
+            {
+              "id": "gqn_d6",
+              "name": "发运计划数据",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "destocking",
+          "name": "去库存进展",
+          "items": [
+            {
+              "id": "gqn_a1",
+              "name": "去库存进展",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "training",
+          "name": "培训目标",
+          "items": [
+            {
+              "id": "gqn_b1",
+              "name": "培训目标",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "difficulties",
+          "name": "每天遇到的困难",
+          "items": [
+            {
+              "id": "gqn_c1",
+              "name": "每天遇到的困难",
+              "done": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "xinjiang",
+      "name": "新疆",
+      "owner": "宋团伟",
+      "sub_people": [
+        {
+          "name": "宋团伟",
+          "account": "宋团伟",
+          "done": false
+        }
+      ],
+      "branches": [
+        {
+          "id": "data_targets",
+          "name": "数据及目标",
+          "items": [
+            {
+              "id": "xj_d1",
+              "name": "转介绍",
+              "done": false
+            },
+            {
+              "id": "xj_d2",
+              "name": "985目标",
+              "done": false
+            },
+            {
+              "id": "xj_d3",
+              "name": "大吨位货梯目标",
+              "done": false
+            },
+            {
+              "id": "xj_d4",
+              "name": "僵尸客户沟通",
+              "done": false
+            },
+            {
+              "id": "xj_d5",
+              "name": "生效计划数据",
+              "done": false
+            },
+            {
+              "id": "xj_d6",
+              "name": "发运计划数据",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "destocking",
+          "name": "去库存进展",
+          "items": [
+            {
+              "id": "xj_a1",
+              "name": "去库存进展",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "training",
+          "name": "培训目标",
+          "items": [
+            {
+              "id": "xj_b1",
+              "name": "培训目标",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "difficulties",
+          "name": "每天遇到的困难",
+          "items": [
+            {
+              "id": "xj_c1",
+              "name": "每天遇到的困难",
+              "done": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "last_run": {
+    "date": "2026-08-05",
+    "editors": [
+      "张通"
+    ]
+  }
+}
