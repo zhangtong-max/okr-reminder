@@ -83,6 +83,8 @@ def build_meeting_message():
 
 例会要记得开启「云录制」，方便未能参会的人员回看。
 
+各位省总，收到请回复。
+
 > 📍 [思维导图](https://www.kdocs.cn/l/cnHbEt5NdceW)
 """
 
