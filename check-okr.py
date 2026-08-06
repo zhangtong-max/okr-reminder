@@ -16,6 +16,7 @@ WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "")
 KDOCS_FILE_ID = "xkStXoxDi1MpLWyuVSPHrxQY7kyyPhQrv"
 MINDMAP_URL = "https://www.kdocs.cn/l/cnHbEt5NdceW"
 DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tracker-data.json")
+STATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "last-sent.json")
 
 TIME_LABELS = {
     "9":  ("早间提醒", "9:00",  "14:00"),
@@ -29,10 +30,91 @@ ICONS = {
     "17": ("🚨", "🔴"),
 }
 
+# 各时段触发时间（北京时间）及对应 slot
+SLOT_TRIGGERS = [
+    (datetime.time(8, 30), "meeting"),   # 周五 8:30 例会提醒
+    (datetime.time(9, 0),  "9"),          # 9:00 早间
+    (datetime.time(14, 0), "14"),         # 14:00 二次
+    (datetime.time(17, 0), "17"),         # 17:00 最后
+]
+
 
 def load_data(path=DATA_PATH):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def load_state():
+    """读取已发送状态"""
+    try:
+        with open(STATE_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"date": "", "sent": []}
+
+
+def save_state(state):
+    """保存已发送状态"""
+    with open(STATE_PATH, "w", encoding="utf-8") as f:
+        json.dump(state, f, ensure_ascii=False)
+
+
+def is_slot_sent(slot):
+    """检查某个时段今天是否已发送"""
+    state = load_state()
+    today = datetime.date.today().isoformat()
+    if state.get("date") != today:
+        return False
+    return slot in state.get("sent", [])
+
+
+def mark_slot_sent(slot):
+    """标记某个时段今天已发送"""
+    state = load_state()
+    today = datetime.date.today().isoformat()
+    if state.get("date") != today:
+        state = {"date": today, "sent": []}
+    if slot not in state["sent"]:
+        state["sent"].append(slot)
+    save_state(state)
+
+
+def beijing_now():
+    """返回当前北京时间"""
+    return datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
+
+
+def auto_detect_slot(now):
+    """
+    根据当前北京时间自动判断应该触发哪个时段。
+    返回 (slot, reason) 或 (None, reason)。
+    只会返回当前时间已到达但尚未发送过的时段。
+    如果多个时段都已到达，优先返回最早未发送的那个。
+    """
+    today = now.date()
+    weekday = now.weekday()  # 0=周一, 6=周日
+    current_time = now.time()
+
+    # 周末不触发
+    if weekday >= 5:
+        return (None, f"周末跳过（{['周一','周二','周三','周四','周五','周六','周日'][weekday]}）")
+
+    candidates = []
+    for trigger_time, slot in SLOT_TRIGGERS:
+        # 周五例会提醒仅周五触发
+        if slot == "meeting" and weekday != 4:
+            continue
+        # 非 meeting 的 slots 工作日都可以
+        if current_time >= trigger_time and not is_slot_sent(slot):
+            candidates.append((trigger_time, slot))
+
+    if not candidates:
+        return (None, "所有时段已发送或未到触发时间")
+
+    # 返回最早的未发送时段
+    candidates.sort()
+    slot = candidates[0][1]
+    return (slot, f"触发时段: {slot}（{candidates[0][0].strftime('%H:%M')}）")
 
 
 def get_today_editors():
@@ -146,8 +228,19 @@ def send_wecom(content):
 
 def main():
     slot = sys.argv[1] if len(sys.argv) > 1 else "9"
+
+    # auto 模式：自动判断时段
+    if slot == "auto":
+        now = beijing_now()
+        print(f"当前北京时间: {now.strftime('%Y-%m-%d %H:%M:%S')} ({['周一','周二','周三','周四','周五','周六','周日'][now.weekday()]})")
+        slot, reason = auto_detect_slot(now)
+        print(reason)
+        if not slot:
+            print("无需操作，退出。")
+            return
+
     if slot not in TIME_LABELS and slot != "meeting":
-        print(f"未知时段: {slot}，请使用 9/14/17/meeting")
+        print(f"未知时段: {slot}，请使用 9/14/17/meeting/auto")
         sys.exit(1)
 
     try:
@@ -160,6 +253,11 @@ def main():
         msg = build_message(slot, data["regions"], today_editors)
         result = send_wecom(msg)
         print(result)
+
+        # 标记已发送
+        mark_slot_sent(slot)
+        print(f"\n已标记 {slot} 时段为已发送")
+
         print("\n=== 发送内容 ===\n" + msg)
     except Exception as e:
         err_msg = f"""<@all>
