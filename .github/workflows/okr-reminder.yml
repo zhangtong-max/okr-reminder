@@ -2,14 +2,9 @@ name: OKR Reminder
 
 on:
   schedule:
-    # 北京时间 9:00 = UTC 1:00，工作日（周一到周五）
-    - cron: "0 1 * * 1-5"
-    # 北京时间 14:00 = UTC 6:00，工作日
-    - cron: "0 6 * * 1-5"
-    # 北京时间 17:00 = UTC 9:00，工作日
-    - cron: "0 9 * * 1-5"
-    # 北京时间周五 8:30 = UTC 周五 0:30
-    - cron: "30 0 * * 5"
+    # 每10分钟触发一次，工作日（周一到周五），时间段覆盖所有需要催办的时间
+    # UTC时间覆盖北京时间 8:00-次日1:00
+    - cron: "*/10 0-16 * * 1-5"
   workflow_dispatch:
     inputs:
       slot:
@@ -24,22 +19,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Determine slot from trigger time
+      - name: Determine slot
         id: slot
         run: |
-          HOUR=$(date -u +%H)
-          MIN=$(date -u +%M)
-          DOW=$(date -u +%u)  # 1=周一, 5=周五
-          if [[ "$DOW" == "5" && "$HOUR" == "00" && "$MIN" == "30" ]]; then
-            echo "slot=meeting" >> "$GITHUB_OUTPUT"
-          elif [[ "$HOUR" == "01" ]]; then
-            echo "slot=9" >> "$GITHUB_OUTPUT"
-          elif [[ "$HOUR" == "06" ]]; then
-            echo "slot=14" >> "$GITHUB_OUTPUT"
-          elif [[ "$HOUR" == "09" ]]; then
-            echo "slot=17" >> "$GITHUB_OUTPUT"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "slot=${{ github.event.inputs.slot }}" >> "$GITHUB_OUTPUT"
           else
-            echo "slot=${{ github.event.inputs.slot || '9' }}" >> "$GITHUB_OUTPUT"
+            echo "slot=auto" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Setup Python
@@ -53,7 +39,6 @@ jobs:
           mkdir -p "$HOME/.local/bin"
           curl -sSL "https://wpsai.wpscdn.cn/skillhub/pro/v2.5.7/releases/kdocs-cli-2.5.7-linux-amd64.tar.gz" -o /tmp/kdocs-cli.tar.gz
           cd /tmp && tar xzf kdocs-cli.tar.gz
-          ls -la /tmp/kdocs-cli
           cp /tmp/kdocs-cli "$HOME/.local/bin/kdocs-cli"
           chmod +x "$HOME/.local/bin/kdocs-cli"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
