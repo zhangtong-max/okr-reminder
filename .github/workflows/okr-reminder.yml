@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   remind:
@@ -80,4 +81,25 @@ jobs:
             git commit -m "chore: update last-sent state"
             git push
             echo "状态文件已保存"
+          fi
+
+      - name: Self-trigger next poll
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "等待25分钟后触发下一次轮询..."
+          sleep 1500
+          echo "触发下一次轮询..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/okr-reminder.yml/dispatches" \
+            -d '{"ref":"main","inputs":{"slot":"auto"}}')
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          echo "触发结果: HTTP $HTTP_CODE"
+          if [ "$HTTP_CODE" = "204" ]; then
+            echo "下一次轮询已成功触发"
+          else
+            echo "触发失败: $RESPONSE"
           fi
