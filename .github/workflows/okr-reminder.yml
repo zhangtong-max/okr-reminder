@@ -2,23 +2,23 @@ name: OKR Reminder
 
 on:
   schedule:
-    # ===== 精确触发（北京时间，UTC+8）=====
-    - cron: "0 1 * * 1-5"       # 北京时间 周一至周五 9:00
-    - cron: "0 6 * * 1-5"       # 北京时间 周一至周五 14:00
-    - cron: "0 9 * * 1-5"       # 北京时间 周一至周五 17:00
-    - cron: "30 0 * * 5"        # 北京时间 周五 8:30 例会提醒
-    # ===== 兜底轮询（每30分钟，自动判断是否需要补发）=====
-    - cron: "*/30 0-16 * * 1-5" # 北京时间 8:00-次日0:00 每30分钟检查
+    # 每10分钟轮询一次（作为主要触发机制）
+    - cron: "*/10 * * * 1-5"
+    # 精准时间冗余触发（确保关键节点不遗漏）
+    - cron: "25 0 * * 5"        # 周五 8:25 提前检查
+    - cron: "30 0 * * 5"        # 周五 8:30 例会
+    - cron: "0 1 * * 1-5"       # 9:00
+    - cron: "0 6 * * 1-5"       # 14:00
+    - cron: "0 9 * * 1-5"       # 17:00
   workflow_dispatch:
     inputs:
       slot:
-        description: "时段 (9/14/17/meeting/auto)"
+        description: "时段 (auto/meeting/9/14/17)"
         required: true
         default: "auto"
 
 permissions:
   contents: write
-  actions: write
 
 jobs:
   remind:
@@ -32,14 +32,6 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "slot=${{ github.event.inputs.slot }}" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.event.schedule }}" == "0 1 * * 1-5" ]]; then
-            echo "slot=9" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.event.schedule }}" == "0 6 * * 1-5" ]]; then
-            echo "slot=14" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.event.schedule }}" == "0 9 * * 1-5" ]]; then
-            echo "slot=17" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.event.schedule }}" == "30 0 * * 5" ]]; then
-            echo "slot=meeting" >> "$GITHUB_OUTPUT"
           else
             echo "slot=auto" >> "$GITHUB_OUTPUT"
           fi
@@ -79,27 +71,7 @@ jobs:
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add last-sent.json
             git commit -m "chore: update last-sent state"
+            git pull --rebase origin main
             git push
             echo "状态文件已保存"
-          fi
-
-      - name: Self-trigger next poll
-        if: success()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "等待25分钟后触发下一次轮询..."
-          sleep 1500
-          echo "触发下一次轮询..."
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/okr-reminder.yml/dispatches" \
-            -d '{"ref":"main","inputs":{"slot":"auto"}}')
-          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-          echo "触发结果: HTTP $HTTP_CODE"
-          if [ "$HTTP_CODE" = "204" ]; then
-            echo "下一次轮询已成功触发"
-          else
-            echo "触发失败: $RESPONSE"
           fi
