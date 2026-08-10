@@ -45,7 +45,7 @@ jobs:
         run: |
           set -ex
           mkdir -p "$HOME/.local/bin"
-          curl -sSL "https://wpsai.wpscdn.cn/skillhub/pro/v2.5.7/releases/kdocs-cli-2.5.7-linux-amd64.tar.gz" -o /tmp/kdocs-cli.tar.gz
+          curl -sSL "https://wpsai.wpscdn.cn/skillhub/pro/v2.6.0/releases/kdocs-cli-2.6.0-linux-amd64.tar.gz" -o /tmp/kdocs-cli.tar.gz
           cd /tmp && tar xzf kdocs-cli.tar.gz
           cp /tmp/kdocs-cli "$HOME/.local/bin/kdocs-cli"
           chmod +x "$HOME/.local/bin/kdocs-cli"
