@@ -55,8 +55,11 @@ def load_state():
 
 def save_state(state):
     """保存已发送状态"""
+    # 确保 date 是字符串
+    if "date" in state and not isinstance(state["date"], str):
+        state["date"] = str(state["date"])
     with open(STATE_PATH, "w", encoding="utf-8") as f:
-        json.dump(state, f, ensure_ascii=False)
+        json.dump(state, f, ensure_ascii=False, default=str)
 
 
 def is_slot_sent(slot):
