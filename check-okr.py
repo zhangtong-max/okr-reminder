@@ -62,7 +62,7 @@ def save_state(state):
 def is_slot_sent(slot):
     """检查某个时段今天是否已发送"""
     state = load_state()
-    today = datetime.date.today().isoformat()
+    today = (datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))).date()  # 北京时间.isoformat()
     if state.get("date") != today:
         return False
     return slot in state.get("sent", [])
@@ -71,7 +71,7 @@ def is_slot_sent(slot):
 def mark_slot_sent(slot):
     """标记某个时段今天已发送"""
     state = load_state()
-    today = datetime.date.today().isoformat()
+    today = (datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))).date()  # 北京时间.isoformat()
     if state.get("date") != today:
         state = {"date": today, "sent": []}
     if slot not in state["sent"]:
@@ -125,10 +125,20 @@ def get_today_editors():
             params = {"file_id": KDOCS_FILE_ID, "page_size": 500}
             if page_token:
                 params["page_token"] = page_token
+            # 传递 KINGSOFT_DOCS_TOKEN 用于认证
+            token = os.environ.get("KINGSOFT_DOCS_TOKEN", "")
+            cli_args = ["kdocs-cli"]
+            if token:
+                cli_args.append("--token")
+                cli_args.append(token)
+            cli_args.extend(["drive", "list-file-versions", json.dumps(params)])
             result = subprocess.run(
-                ["kdocs-cli", "drive", "list-file-versions", json.dumps(params)],
+                cli_args,
                 capture_output=True, text=True, timeout=30,
             )
+            if result.returncode != 0:
+                print(f"[版本历史] kdocs-cli 返回非零: {result.returncode}")
+                print(f"[版本历史] stderr: {result.stderr[:500]}")
             if result.returncode != 0:
                 print(f"[版本历史] kdocs-cli 返回非零: {result.returncode}")
                 print(f"[版本历史] stderr: {result.stderr}")
