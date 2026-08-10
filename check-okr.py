@@ -104,7 +104,6 @@ def get_today_editors():
             if r.returncode != 0:
                 print(f"[DEBUG] kdocs-cli FAILED code={r.returncode}")
                 break
-            print(f"[DEBUG] stdout: {r.stdout[:300]}")
             data = json.loads(r.stdout)
             code = data.get("code", "N/A")
             inner = data.get("data", {}).get("data", {})
