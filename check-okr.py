@@ -104,10 +104,13 @@ def get_today_editors():
             if r.returncode != 0:
                 print(f"[DEBUG] kdocs-cli FAILED code={r.returncode}")
                 break
+            print(f"[DEBUG] stdout: {r.stdout[:300]}")
             data = json.loads(r.stdout)
+            code = data.get("code", "N/A")
             inner = data.get("data", {}).get("data", {})
+            inner_code = inner.get("code", "N/A")
             items = inner.get("items", [])
-            print(f"[DEBUG] page items={len(items)}")
+            print(f"[DEBUG] code={code} inner_code={inner_code} items={len(items)}")
             all_versions.extend(items)
             pt = inner.get("next_page_token")
             if not pt:
