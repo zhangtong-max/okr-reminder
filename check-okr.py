@@ -14,21 +14,21 @@ KDOCS_TOKEN = os.environ.get("KINGSOFT_DOCS_TOKEN", "")
 
 TIME_LABELS = {
     "9":  ("早间提醒", "9:00",  "14:00"),
-    "14": ("二次催促", "14:00", "19:00"),
-    "19": ("收尾提醒", "19:00", None),
+    "14": ("二次催促", "14:00", "17:00"),
+    "17": ("收尾提醒", "17:00", None),
 }
 
 ICONS = {
     "9":  ("📋", "🔴"),
     "14": ("⚠️", "🔴"),
-    "19": ("🚨", "🔴"),
+    "17": ("🚨", "🔴"),
 }
 
 SLOT_TRIGGERS = [
     (datetime.time(8, 30), "meeting"),
     (datetime.time(9, 0),  "9"),
     (datetime.time(14, 0), "14"),
-    (datetime.time(19, 0), "19"),
+    (datetime.time(17, 0), "17"),
 ]
 
 BJT = datetime.timezone(datetime.timedelta(hours=8))
@@ -80,6 +80,10 @@ def auto_detect_slot(now):
         if sl == "meeting" and wd != 4:
             continue
         if ct >= tt and not is_slot_sent(sl):
+            # 超过1小时不补发（防止cron恢复后发送过期提醒）
+            delta_mins = (ct.hour * 60 + ct.minute) - (tt.hour * 60 + tt.minute)
+            if delta_mins > 60:
+                continue
             return (sl, f"trigger: {sl}")
     return (None, "all_sent")
 
@@ -135,6 +139,25 @@ def get_today_editors():
         return set()
 
 
+def save_daily_editors(editors):
+    """将今日编辑者追加到状态中（取并集）"""
+    s = load_state()
+    today = bj_now().strftime("%Y-%m-%d")
+    if "daily_editors" not in s:
+        s["daily_editors"] = {}
+    existing = set(s["daily_editors"].get(today, []))
+    existing.update(editors)
+    s["daily_editors"][today] = sorted(existing)
+    save_state(s)
+
+
+def get_yesterday_editors():
+    """获取昨日的编辑者名单"""
+    s = load_state()
+    yesterday = (bj_now() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+    return s.get("daily_editors", {}).get(yesterday, [])
+
+
 def build_meeting_message():
     return """<@all>
 ## 📅 周六例会提醒
@@ -160,8 +183,15 @@ def build_message(slot, regions, today_editors):
         "<@all>",
         f"## {icon} 北方区域 OKR · {label}（{current_time}）",
         f"> 📝 今日编辑者：<font color='info'>**{editor_str}**</font>",
-        "",
     ]
+    # 早间提醒附加昨日编辑者
+    if slot == "9":
+        yed = get_yesterday_editors()
+        if yed:
+            lines.append(f"> 📅 昨日编辑者：<font color='comment'>**{'、'.join(yed)}**</font>")
+        else:
+            lines.append("> 📅 昨日无编辑记录")
+    lines.append("")
     lines.append("### 📋 各区域待确认人员")
     for region in regions:
         sub_people = region.get("sub_people", [])
@@ -211,6 +241,8 @@ def main():
         if slot != "meeting":
             eds = get_today_editors()
             print(f"Editors: {eds}")
+            if eds:
+                save_daily_editors(eds)
         msg = build_message(slot, data["regions"], eds)
         result = send_wecom(msg)
         print(result)
