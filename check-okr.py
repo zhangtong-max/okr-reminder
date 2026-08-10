@@ -25,9 +25,9 @@ TIME_LABELS = {
 }
 
 ICONS = {
-    "9":  ("📋", "🔴"),
-    "14": ("⚠️", "🔴"),
-    "17": ("🚨", "🔴"),
+    "9":  ("\U0001f4cb", "\U0001f534"),
+    "14": ("\u26a0\ufe0f", "\U0001f534"),
+    "17": ("\U0001f6a8", "\U0001f534"),
 }
 
 # 各时段触发时间（北京时间）及对应 slot
@@ -91,7 +91,6 @@ def auto_detect_slot(now):
     只会返回当前时间已到达但尚未发送过的时段。
     如果多个时段都已到达，优先返回最早未发送的那个。
     """
-    today = now.date()
     weekday = now.weekday()  # 0=周一, 6=周日
     current_time = now.time()
 
@@ -130,6 +129,9 @@ def get_today_editors():
                 ["kdocs-cli", "drive", "list-file-versions", json.dumps(params)],
                 capture_output=True, text=True, timeout=30,
             )
+            if result.returncode != 0:
+                print(f"[版本历史] kdocs-cli 返回非零: {result.returncode}")
+                print(f"[版本历史] stderr: {result.stderr}")
             data = json.loads(result.stdout)
             inner = data.get("data", {}).get("data", {})
             items = inner.get("items", [])
@@ -138,18 +140,36 @@ def get_today_editors():
             if not page_token:
                 break
 
-        today = datetime.date.today()
+        # 使用北京时间作为"今天"的判定
+        beijing_today = beijing_now().date()
         editors = set()
+
+        print(f"[版本历史] 共 {len(all_versions)} 条记录, 北京时间今天: {beijing_today}")
+
+        # 打印最近 3 条版本用于排查
+        for i, v in enumerate(all_versions[:3]):
+            mtime = v.get("mtime", 0)
+            if mtime > 1_000_000_000_000:
+                mtime = mtime / 1000
+            bj_dt = datetime.datetime.fromtimestamp(mtime, datetime.timezone(datetime.timedelta(hours=8)))
+            name = v.get("modified_by", {}).get("name", "未知")
+            print(f"[版本历史]  #{i+1} {bj_dt.strftime('%Y-%m-%d %H:%M:%S')} (北京) 编辑者: {name}")
+
         for v in all_versions:
             mtime = v.get("mtime", 0)
             if not mtime:
                 continue
             if mtime > 1_000_000_000_000:
                 mtime = mtime / 1000
-            if datetime.date.fromtimestamp(mtime) == today:
+            version_bj_date = datetime.datetime.fromtimestamp(
+                mtime, datetime.timezone(datetime.timedelta(hours=8))
+            ).date()
+            if version_bj_date == beijing_today:
                 name = v.get("modified_by", {}).get("name")
                 if name:
                     editors.add(name)
+
+        print(f"[版本历史] 今日编辑者(北京时间): {editors}")
         return editors
     except Exception as e:
         print(f"获取版本历史失败：{e}")
@@ -159,7 +179,7 @@ def get_today_editors():
 def build_meeting_message():
     """周五例会提醒"""
     return """<@all>
-## 📅 周六例会提醒
+\U0001f4c5 ## 周六例会提醒
 
 各位省总，明天就是周六了，请提前准备好周例会的汇报内容，今天内发给张通。
 
@@ -167,7 +187,7 @@ def build_meeting_message():
 
 各位省总，收到请回复。
 
-> 📍 [思维导图](https://www.kdocs.cn/l/cnHbEt5NdceW)
+> \U0001f4cd [思维导图](https://www.kdocs.cn/l/cnHbEt5NdceW)
 """
 
 
@@ -185,11 +205,11 @@ def build_message(slot, regions, today_editors):
     lines = [
         "<@all>",
         f"## {icon} 北方区域 OKR · {label}（{current_time}）",
-        f"> 📝 今日编辑者：<font color='info'>**{editor_str}**</font>",
+        f"> \U0001f4dd 今日编辑者：<font color='info'>**{editor_str}**</font>",
         "",
     ]
 
-    lines.append("### 📋 各区域待确认人员")
+    lines.append("### \U0001f4cb 各区域待确认人员")
     for region in regions:
         sub_people = region.get("sub_people", [])
         if not sub_people:
@@ -202,14 +222,14 @@ def build_message(slot, regions, today_editors):
     if not has_update:
         lines.append(f"> {warn_icon} 今日思维导图暂无更新记录，请各位尽快更新")
     else:
-        lines.append("> ✅ 今日思维导图已有更新记录")
+        lines.append("> \u2705 今日思维导图已有更新记录")
 
     if next_time:
-        lines.append(f"> ⏰ 下次提醒：**{next_time}**")
+        lines.append(f"> \u23f0 下次提醒：**{next_time}**")
     else:
-        lines.append("> ⚠️ 今日即将结束，请 @张通 关注未完成的区域负责人")
+        lines.append("> \u26a0\ufe0f 今日即将结束，请 @张通 关注未完成的区域负责人")
 
-    lines.append(f"> 📍 [思维导图]({MINDMAP_URL})")
+    lines.append(f"> \U0001f4cd [思维导图]({MINDMAP_URL})")
 
     return "\n".join(lines)
 
@@ -261,7 +281,7 @@ def main():
         print("\n=== 发送内容 ===\n" + msg)
     except Exception as e:
         err_msg = f"""<@all>
-## ⚠️ 北区OKR催办异常
+## \u26a0\ufe0f 北区OKR催办异常
 > 错误：{str(e)}
 > 请 @张通 检查文件配置。"""
         try:
