@@ -14,21 +14,21 @@ KDOCS_TOKEN = os.environ.get("KINGSOFT_DOCS_TOKEN", "")
 
 TIME_LABELS = {
     "9":  ("早间提醒", "9:00",  "14:00"),
-    "14": ("二次催促", "14:00", "17:00"),
-    "17": ("最后通牒", "17:00", None),
+    "14": ("二次催促", "14:00", "19:00"),
+    "19": ("收尾提醒", "19:00", None),
 }
 
 ICONS = {
     "9":  ("📋", "🔴"),
     "14": ("⚠️", "🔴"),
-    "17": ("🚨", "🔴"),
+    "19": ("🚨", "🔴"),
 }
 
 SLOT_TRIGGERS = [
     (datetime.time(8, 30), "meeting"),
     (datetime.time(9, 0),  "9"),
     (datetime.time(14, 0), "14"),
-    (datetime.time(17, 0), "17"),
+    (datetime.time(19, 0), "19"),
 ]
 
 BJT = datetime.timezone(datetime.timedelta(hours=8))
