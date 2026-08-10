@@ -2,7 +2,7 @@
 """
 北区 OKR 区域完成度催办脚本（GitHub Actions 云端版）
 """
-import json, sys, os, subprocess, datetime
+import json, sys, os, subprocess, datetime, traceback
 from urllib import request
 
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "")
@@ -19,9 +19,9 @@ TIME_LABELS = {
 }
 
 ICONS = {
-    "9":  ("\U0001f4cb", "\U0001f534"),
-    "14": ("\u26a0\ufe0f", "\U0001f534"),
-    "17": ("\U0001f6a8", "\U0001f534"),
+    "9":  ("📋", "🔴"),
+    "14": ("⚠️", "🔴"),
+    "17": ("🚨", "🔴"),
 }
 
 SLOT_TRIGGERS = [
@@ -85,6 +85,7 @@ def auto_detect_slot(now):
 
 
 def get_today_editors():
+    """调用 kdocs-cli 获取今日版本历史编辑者集合。关键：必须传 --token！"""
     try:
         all_versions = []
         pt = None
@@ -99,20 +100,20 @@ def get_today_editors():
             r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
             print(f"[DEBUG] kdocs-cli exit={r.returncode} stdout_len={len(r.stdout)} stderr_len={len(r.stderr)}")
             if r.stderr:
-                print(f"[DEBUG] stderr first 500: {r.stderr[:500]}")
+                print(f"[DEBUG] stderr: {r.stderr[:500]}")
             if r.returncode != 0:
-                print(f"[DEBUG] kdocs-cli FAILED with code {r.returncode}")
+                print(f"[DEBUG] kdocs-cli FAILED code={r.returncode}")
                 break
             data = json.loads(r.stdout)
             inner = data.get("data", {}).get("data", {})
             items = inner.get("items", [])
-            print(f"[DEBUG] page items: {len(items)}")
+            print(f"[DEBUG] page items={len(items)}")
             all_versions.extend(items)
             pt = inner.get("next_page_token")
             if not pt:
                 break
         today = bj_now().date()
-        print(f"[DEBUG] total versions: {len(all_versions)}, today(Beijing): {today}")
+        print(f"[DEBUG] total_versions={len(all_versions)} today(Beijing)={today}")
         editors = set()
         for v in all_versions:
             mt = v.get("mtime", 0)
@@ -124,26 +125,25 @@ def get_today_editors():
                 nm = v.get("modified_by", {}).get("name")
                 if nm:
                     editors.add(nm)
-        print(f"[DEBUG] editors found: {editors}")
+        print(f"[DEBUG] editors_found={editors}")
         return editors
     except Exception as e:
-        print(f"[DEBUG] get_today_editors EXCEPTION: {e}")
-        import traceback
+        print(f"[DEBUG] EXCEPTION: {e}")
         traceback.print_exc()
         return set()
 
 
 def build_meeting_message():
     return """<@all>
-## \U0001f4c5 \u5468\u516d\u4f8b\u4f1a\u63d0\u9192
+## 📅 周六例会提醒
 
-\u5404\u4f4d\u7701\u603b\uff0c\u660e\u5929\u5c31\u662f\u5468\u516d\u4e86\uff0c\u8bf7\u63d0\u524d\u51c6\u5907\u597d\u5468\u4f8b\u4f1a\u7684\u6c47\u62a5\u5185\u5bb9\uff0c\u4eca\u5929\u5185\u53d1\u7ed9\u5f20\u901a\u3002
+各位省总，明天就是周六了，请提前准备好周例会的汇报内容，今天内发给张通。
 
-\u4f8b\u4f1a\u8981\u8bb0\u5f97\u5f00\u542f\u300c\u4e91\u5f55\u5236\u300d\uff0c\u65b9\u4fbf\u672a\u80fd\u53c2\u4f1a\u7684\u4eba\u5458\u56de\u770b\u3002
+例会要记得开启「云录制」，方便未能参会的人员回看。
 
-\u5404\u4f4d\u7701\u603b\uff0c\u6536\u5230\u8bf7\u56de\u590d\u3002
+各位省总，收到请回复。
 
-> \U0001f4cd [\u601d\u7ef4\u5bfc\u56fe](https://www.kdocs.cn/l/cnHbEt5NdceW)
+> 📍 [思维导图](https://www.kdocs.cn/l/cnHbEt5NdceW)
 """
 
 
@@ -153,31 +153,31 @@ def build_message(slot, regions, today_editors):
     label, current_time, next_time = TIME_LABELS[slot]
     icon, warn_icon = ICONS[slot]
     has_update = len(today_editors) > 0
-    editor_str = "\u3001".join(sorted(today_editors)) if has_update else "\u65e0"
+    editor_str = "、".join(sorted(today_editors)) if has_update else "无"
     lines = [
         "<@all>",
-        f"## {icon} \u5317\u65b9\u533a\u57df OKR \u00b7 {label}\uff08{current_time}\uff09",
-        f"> \U0001f4dd \u4eca\u65e5\u7f16\u8f91\u8005\uff1a<font color='info'>**{editor_str}**</font>",
+        f"## {icon} 北方区域 OKR · {label}（{current_time}）",
+        f"> 📝 今日编辑者：<font color='info'>**{editor_str}**</font>",
         "",
     ]
-    lines.append("### \U0001f4cb \u5404\u533a\u57df\u5f85\u786e\u8ba4\u4eba\u5458")
+    lines.append("### 📋 各区域待确认人员")
     for region in regions:
         sub_people = region.get("sub_people", [])
         if not sub_people:
             continue
-        names = "\u3001".join(p["name"] for p in sub_people)
-        lines.append(f"> **{region['name']}** \u2014 \u7701\u603b\uff1a<font color=\"warning\">**{region['owner']}**</font>")
+        names = "、".join(p["name"] for p in sub_people)
+        lines.append(f"> **{region['name']}** — 省总：<font color=\"warning\">**{region['owner']}**</font>")
         lines.append(f"> - {names}")
     lines.append("")
     if not has_update:
-        lines.append(f"> {warn_icon} \u4eca\u65e5\u601d\u7ef4\u5bfc\u56fe\u6682\u65e0\u66f4\u65b0\u8bb0\u5f55\uff0c\u8bf7\u5404\u4f4d\u5c3d\u5feb\u66f4\u65b0")
+        lines.append(f"> {warn_icon} 今日思维导图暂无更新记录，请各位尽快更新")
     else:
-        lines.append("> \u2705 \u4eca\u65e5\u601d\u7ef4\u5bfc\u56fe\u5df2\u6709\u66f4\u65b0\u8bb0\u5f55")
+        lines.append("> ✅ 今日思维导图已有更新记录")
     if next_time:
-        lines.append(f"> \u23f0 \u4e0b\u6b21\u63d0\u9192\uff1a**{next_time}**")
+        lines.append(f"> ⏰ 下次提醒：**{next_time}**")
     else:
-        lines.append("> \u26a0\ufe0f \u4eca\u65e5\u5373\u5c06\u7ed3\u675f\uff0c\u8bf7 @\u5f20\u901a \u5173\u6ce8\u672a\u5b8c\u6210\u7684\u533a\u57df\u8d1f\u8d23\u4eba")
-    lines.append(f"> \U0001f4cd [\u601d\u7ef4\u5bfc\u56fe]({MINDMAP_URL})")
+        lines.append("> ⚠️ 今日即将结束，请 @张通 关注未完成的区域负责人")
+    lines.append(f"> 📍 [思维导图]({MINDMAP_URL})")
     return "\n".join(lines)
 
 
@@ -217,9 +217,9 @@ def main():
         print("\n=== Message ===\n" + msg)
     except Exception as e:
         err_msg = f"""<@all>
-## \u26a0\ufe0f OKR\u50ac\u529e\u5f02\u5e38
-> \u9519\u8bef\uff1a{str(e)}
-> \u8bf7 @\u5f20\u901a \u68c0\u67e5\u914d\u7f6e\u3002"""
+## ⚠️ OKR催办异常
+> 错误：{str(e)}
+> 请 @张通 检查配置。"""
         try:
             send_wecom(err_msg)
         except:
