@@ -41,13 +41,45 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Cache kdocs-cli
+        id: cache-kdocs
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/kdocs-cli/kdocs-cli
+          key: kdocs-cli-2.6.0-linux-amd64
+          restore-keys: |
+            kdocs-cli-2.6.0-
+
       - name: Install kdocs-cli
         run: |
           set -ex
           mkdir -p "$HOME/.local/bin"
-          curl -sSL "https://wpsai.wpscdn.cn/skillhub/pro/v2.6.0/releases/kdocs-cli-2.6.0-linux-amd64.tar.gz" -o /tmp/kdocs-cli.tar.gz
-          cd /tmp && tar xzf kdocs-cli.tar.gz
-          cp /tmp/kdocs-cli "$HOME/.local/bin/kdocs-cli"
+          CACHE_FILE="$HOME/.cache/kdocs-cli/kdocs-cli"
+
+          if [ -f "$CACHE_FILE" ]; then
+            echo "使用缓存的 kdocs-cli"
+            cp "$CACHE_FILE" "$HOME/.local/bin/kdocs-cli"
+          else
+            echo "下载 kdocs-cli..."
+            mkdir -p "$HOME/.cache/kdocs-cli"
+
+            # 优先从 GitHub Release 下载（GitHub Actions 内网更稳定）
+            if curl -fsSL --retry 3 --retry-delay 5 --connect-timeout 10 --max-time 90 \
+              "https://github.com/zhangtong-max/okr-reminder/releases/download/kdocs-cli-2.6.0/kdocs-cli-2.6.0-linux-amd64.tar.gz" \
+              -o /tmp/kdocs-cli.tar.gz; then
+              echo "从 GitHub Release 下载成功"
+            else
+              echo "GitHub Release 失败，回退到 WPS CDN..."
+              curl -fsSL --retry 5 --retry-delay 10 --connect-timeout 15 --max-time 120 \
+                "https://wpsai.wpscdn.cn/skillhub/pro/v2.6.0/releases/kdocs-cli-2.6.0-linux-amd64.tar.gz" \
+                -o /tmp/kdocs-cli.tar.gz
+            fi
+
+            cd /tmp && tar xzf kdocs-cli.tar.gz
+            cp /tmp/kdocs-cli "$CACHE_FILE"
+            cp "$CACHE_FILE" "$HOME/.local/bin/kdocs-cli"
+          fi
+
           chmod +x "$HOME/.local/bin/kdocs-cli"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           "$HOME/.local/bin/kdocs-cli" version
