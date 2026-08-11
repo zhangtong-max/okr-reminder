@@ -65,7 +65,12 @@ def mark_slot_sent(slot):
     s = load_state()
     today = bj_now().strftime("%Y-%m-%d")
     if s.get("date") != today:
+        # 日期切换时保留昨日编辑记录，否则第二天9:00读不到
+        old_editors = s.get("daily_editors", {})
+        yesterday = (bj_now() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
         s = {"date": today, "sent": []}
+        if yesterday in old_editors:
+            s["daily_editors"] = {yesterday: old_editors[yesterday]}
     if slot not in s["sent"]:
         s["sent"].append(slot)
     save_state(s)
@@ -121,17 +126,21 @@ def get_today_editors():
         today = bj_now().date()
         print(f"[DEBUG] total_versions={len(all_versions)} today(Beijing)={today}")
         editors = set()
+        matched_times = []
         for v in all_versions:
             mt = v.get("mtime", 0)
             if not mt:
                 continue
             if mt > 1e12:
                 mt /= 1000
-            if datetime.datetime.fromtimestamp(mt, BJT).date() == today:
+            vdate = datetime.datetime.fromtimestamp(mt, BJT).date()
+            if vdate == today:
                 nm = v.get("modified_by", {}).get("name")
                 if nm:
                     editors.add(nm)
+                    matched_times.append(datetime.datetime.fromtimestamp(mt, BJT).strftime("%H:%M"))
         print(f"[DEBUG] editors_found={editors}")
+        print(f"[DEBUG] matched_times={matched_times[:20]}")
         return editors
     except Exception as e:
         print(f"[DEBUG] EXCEPTION: {e}")
