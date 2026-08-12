@@ -244,6 +244,13 @@ def send_wecom(content):
 
 def main():
     slot = sys.argv[1] if len(sys.argv) > 1 else "9"
+    if slot == "debug":
+        print("=== DEBUG MODE ===")
+        eds = get_today_editors()
+        print(f"Today editors: {eds}")
+        s = load_state()
+        print(f"State: {json.dumps(s, ensure_ascii=False)}")
+        return
     if slot == "auto":
         now = bj_now()
         print(f"Beijing: {now}")
