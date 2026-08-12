@@ -238,41 +238,6 @@ def main():
         print("=== DEBUG MODE ===")
         eds = get_today_editors()
         print(f"Today editors: {eds}")
-        # 也查昨天的编辑者
-        all_versions = []
-        pt = None
-        for _ in range(5):
-            params = {"file_id": KDOCS_FILE_ID, "page_size": 500}
-            if pt:
-                params["page_token"] = pt
-            cmd = ["kdocs-cli"]
-            if KDOCS_TOKEN:
-                cmd.extend(["--token", KDOCS_TOKEN])
-            cmd.extend(["drive", "list-file-versions", json.dumps(params)])
-            r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-            if r.returncode != 0:
-                break
-            data = json.loads(r.stdout)
-            inner = data.get("data", {}).get("data", {})
-            items = inner.get("items", [])
-            all_versions.extend(items)
-            pt = inner.get("next_page_token")
-            if not pt:
-                break
-        yesterday = (bj_now() - datetime.timedelta(days=1)).date()
-        y_editors = set()
-        for v in all_versions:
-            mt = v.get("mtime", 0)
-            if not mt:
-                continue
-            if mt > 1e12:
-                mt /= 1000
-            vdate = datetime.datetime.fromtimestamp(mt, BJT).date()
-            if vdate == yesterday:
-                nm = v.get("created_by", {}).get("name") or v.get("modified_by", {}).get("name")
-                if nm:
-                    y_editors.add(nm)
-        print(f"Yesterday ({yesterday}) editors: {y_editors}")
         s = load_state()
         print(f"State: {json.dumps(s, ensure_ascii=False)}")
         return
