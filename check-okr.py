@@ -125,17 +125,18 @@ def get_today_editors():
                 break
         today = bj_now().date()
         print(f"[DEBUG] total_versions={len(all_versions)} today(Beijing)={today}")
-        # 打印所有版本中的唯一编辑者（不限日期）
-        all_editors = set()
+        # 打印所有版本中的唯一编辑者（created_by + modified_by）
+        all_created_by = set()
+        all_modified_by = set()
         for v in all_versions:
-            nm = v.get("modified_by", {}).get("name")
-            if nm:
-                all_editors.add(nm)
-        print(f"[DEBUG] ALL unique editors across all versions: {all_editors}")
-        # 打印第一个版本项的完整结构
-        if all_versions:
-            print(f"[DEBUG] first version item keys: {list(all_versions[0].keys())}")
-            print(f"[DEBUG] first version item: {json.dumps(all_versions[0], ensure_ascii=False)[:800]}")
+            cb = v.get("created_by", {}).get("name")
+            mb = v.get("modified_by", {}).get("name")
+            if cb:
+                all_created_by.add(cb)
+            if mb:
+                all_modified_by.add(mb)
+        print(f"[DEBUG] ALL unique created_by: {all_created_by}")
+        print(f"[DEBUG] ALL unique modified_by: {all_modified_by}")
         editors = set()
         matched_times = []
         for v in all_versions:
@@ -146,7 +147,8 @@ def get_today_editors():
                 mt /= 1000
             vdate = datetime.datetime.fromtimestamp(mt, BJT).date()
             if vdate == today:
-                nm = v.get("modified_by", {}).get("name")
+                # 优先用 created_by（实际编辑者），回退到 modified_by
+                nm = v.get("created_by", {}).get("name") or v.get("modified_by", {}).get("name")
                 if nm:
                     editors.add(nm)
                     matched_times.append(datetime.datetime.fromtimestamp(mt, BJT).strftime("%H:%M"))
