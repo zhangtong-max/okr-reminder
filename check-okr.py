@@ -125,6 +125,17 @@ def get_today_editors():
                 break
         today = bj_now().date()
         print(f"[DEBUG] total_versions={len(all_versions)} today(Beijing)={today}")
+        # 打印所有版本中的唯一编辑者（不限日期）
+        all_editors = set()
+        for v in all_versions:
+            nm = v.get("modified_by", {}).get("name")
+            if nm:
+                all_editors.add(nm)
+        print(f"[DEBUG] ALL unique editors across all versions: {all_editors}")
+        # 打印第一个版本项的完整结构
+        if all_versions:
+            print(f"[DEBUG] first version item keys: {list(all_versions[0].keys())}")
+            print(f"[DEBUG] first version item: {json.dumps(all_versions[0], ensure_ascii=False)[:800]}")
         editors = set()
         matched_times = []
         for v in all_versions:
