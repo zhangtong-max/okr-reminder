@@ -125,18 +125,6 @@ def get_today_editors():
                 break
         today = bj_now().date()
         print(f"[DEBUG] total_versions={len(all_versions)} today(Beijing)={today}")
-        # 打印所有版本中的唯一编辑者（created_by + modified_by）
-        all_created_by = set()
-        all_modified_by = set()
-        for v in all_versions:
-            cb = v.get("created_by", {}).get("name")
-            mb = v.get("modified_by", {}).get("name")
-            if cb:
-                all_created_by.add(cb)
-            if mb:
-                all_modified_by.add(mb)
-        print(f"[DEBUG] ALL unique created_by: {all_created_by}")
-        print(f"[DEBUG] ALL unique modified_by: {all_modified_by}")
         editors = set()
         matched_times = []
         for v in all_versions:
@@ -147,7 +135,7 @@ def get_today_editors():
                 mt /= 1000
             vdate = datetime.datetime.fromtimestamp(mt, BJT).date()
             if vdate == today:
-                # 优先用 created_by（实际编辑者），回退到 modified_by
+                # 用 created_by（实际编辑者），回退到 modified_by
                 nm = v.get("created_by", {}).get("name") or v.get("modified_by", {}).get("name")
                 if nm:
                     editors.add(nm)
