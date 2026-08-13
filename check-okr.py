@@ -13,18 +13,21 @@ STATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "last-sent
 KDOCS_TOKEN = os.environ.get("KINGSOFT_DOCS_TOKEN", "")
 
 TIME_LABELS = {
-    "9":  ("早间提醒", "9:00",  "17:00"),
+    "9":  ("早间提醒", "9:00",  "14:00"),
+    "14": ("二次催促", "14:00", "17:00"),
     "17": ("收尾提醒", "17:00", None),
 }
 
 ICONS = {
     "9":  ("📋", "🔴"),
+    "14": ("⚠️", "🔴"),
     "17": ("🚨", "🔴"),
 }
 
 SLOT_TRIGGERS = [
     (datetime.time(8, 30), "meeting"),
     (datetime.time(9, 0),  "9"),
+    (datetime.time(14, 0), "14"),
     (datetime.time(17, 0), "17"),
 ]
 
