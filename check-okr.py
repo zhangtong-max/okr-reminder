@@ -13,21 +13,18 @@ STATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "last-sent
 KDOCS_TOKEN = os.environ.get("KINGSOFT_DOCS_TOKEN", "")
 
 TIME_LABELS = {
-    "9":  ("早间提醒", "9:00",  "14:00"),
-    "14": ("二次催促", "14:00", "17:00"),
+    "9":  ("早间提醒", "9:00",  "17:00"),
     "17": ("收尾提醒", "17:00", None),
 }
 
 ICONS = {
     "9":  ("📋", "🔴"),
-    "14": ("⚠️", "🔴"),
     "17": ("🚨", "🔴"),
 }
 
 SLOT_TRIGGERS = [
     (datetime.time(8, 30), "meeting"),
     (datetime.time(9, 0),  "9"),
-    (datetime.time(14, 0), "14"),
     (datetime.time(17, 0), "17"),
 ]
 
@@ -192,8 +189,11 @@ def build_message(slot, regions, today_editors):
     lines = [
         "<@all>",
         f"## {icon} 北方区域 OKR · {label}（{current_time}）",
-        f"> 📝 今日编辑者：<font color='info'>**{editor_str}**</font>",
     ]
+    if has_update:
+        lines.append(f"> 📝 今日编辑者：<font color='info'>**{editor_str}**</font>")
+    else:
+        lines.append(f"> 📝 今日暂无编辑记录")
     # 早间提醒附加昨日编辑者
     if slot == "9":
         yed = get_yesterday_editors()
@@ -202,19 +202,8 @@ def build_message(slot, regions, today_editors):
         else:
             lines.append("> 📅 昨日无编辑记录")
     lines.append("")
-    lines.append("### 📋 各区域待确认人员")
-    for region in regions:
-        sub_people = region.get("sub_people", [])
-        if not sub_people:
-            continue
-        names = "、".join(p["name"] for p in sub_people)
-        lines.append(f"> **{region['name']}** — 省总：<font color=\"warning\">**{region['owner']}**</font>")
-        lines.append(f"> - {names}")
-    lines.append("")
     if not has_update:
-        lines.append(f"> {warn_icon} 今日思维导图暂无更新记录，请各位尽快更新")
-    else:
-        lines.append("> ✅ 今日思维导图已有更新记录")
+        lines.append(f"> {warn_icon} 请各位尽快更新思维导图")
     if next_time:
         lines.append(f"> ⏰ 下次提醒：**{next_time}**")
     else:
