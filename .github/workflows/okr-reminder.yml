@@ -8,11 +8,12 @@ on:
     - cron: "25 0 * * 5"        # 周五 8:25 提前检查
     - cron: "30 0 * * 5"        # 周五 8:30 例会
     - cron: "0 1 * * 1-5"       # 9:00
+    - cron: "0 6 * * 1-5"       # 14:00 (UTC+8)
     - cron: "0 9 * * 1-5"       # 17:00 (UTC+8)
   workflow_dispatch:
     inputs:
       slot:
-        description: "时段 (auto/meeting/9/17/debug)"
+        description: "时段 (auto/meeting/9/14/17/debug)"
         required: true
         default: "auto"
 
