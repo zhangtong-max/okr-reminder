@@ -127,6 +127,8 @@ def get_today_editors():
         print(f"[DEBUG] total_versions={len(all_versions)} today(Beijing)={today}")
         editors = set()
         matched_times = []
+        no_name_versions = []
+        all_today_details = []
         for v in all_versions:
             mt = v.get("mtime", 0)
             if not mt:
@@ -135,13 +137,29 @@ def get_today_editors():
                 mt /= 1000
             vdate = datetime.datetime.fromtimestamp(mt, BJT).date()
             if vdate == today:
-                # 用 created_by（实际编辑者），回退到 modified_by
-                nm = v.get("created_by", {}).get("name") or v.get("modified_by", {}).get("name")
+                cb = v.get("created_by") or {}
+                mb = v.get("modified_by") or {}
+                tstr = datetime.datetime.fromtimestamp(mt, BJT).strftime("%H:%M:%S")
+                cb_name = cb.get("name") if isinstance(cb, dict) else None
+                mb_name = mb.get("name") if isinstance(mb, dict) else None
+                # 优先 created_by（实际编辑者）；modified_by 恒为文档所有者张通，仅在其非张通时才作回退
+                nm = cb_name
+                if not nm and mb_name and mb_name != "张通":
+                    nm = mb_name
+                all_today_details.append((tstr, cb_name, mb_name, nm))
                 if nm:
                     editors.add(nm)
-                    matched_times.append(datetime.datetime.fromtimestamp(mt, BJT).strftime("%H:%M"))
-        print(f"[DEBUG] editors_found={editors}")
-        print(f"[DEBUG] matched_times={matched_times[:20]}")
+                    matched_times.append(tstr)
+                else:
+                    no_name_versions.append({"time": tstr, "created_by": cb, "modified_by": mb})
+        print(f"[DEBUG] today_versions={len(all_today_details)} editors_found={editors}")
+        print(f"[DEBUG] matched_times={matched_times[:30]}")
+        print(f"[DEBUG] no_name_versions={len(no_name_versions)}")
+        for nv in no_name_versions[:15]:
+            print(f"[DEBUG]   no_name: {nv}")
+        print(f"[DEBUG] === per-version (time | created_by | modified_by | picked) ===")
+        for tstr, cbn, mbn, nm in sorted(all_today_details, reverse=True):
+            print(f"[DEBUG]   {tstr} | cb={cbn!r} | mb={mbn!r} | picked={nm!r}")
         return editors
     except Exception as e:
         print(f"[DEBUG] EXCEPTION: {e}")
