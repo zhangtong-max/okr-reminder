@@ -154,12 +154,10 @@ def get_today_editors():
                     no_name_versions.append({"time": tstr, "created_by": cb, "modified_by": mb})
         print(f"[DEBUG] today_versions={len(all_today_details)} editors_found={editors}")
         print(f"[DEBUG] matched_times={matched_times[:30]}")
-        print(f"[DEBUG] no_name_versions={len(no_name_versions)}")
-        for nv in no_name_versions[:15]:
-            print(f"[DEBUG]   no_name: {nv}")
-        print(f"[DEBUG] === per-version (time | created_by | modified_by | picked) ===")
-        for tstr, cbn, mbn, nm in sorted(all_today_details, reverse=True):
-            print(f"[DEBUG]   {tstr} | cb={cbn!r} | mb={mbn!r} | picked={nm!r}")
+        if no_name_versions:
+            print(f"[DEBUG] no_name_versions={len(no_name_versions)}")
+            for nv in no_name_versions[:15]:
+                print(f"[DEBUG]   no_name: {nv}")
         return editors
     except Exception as e:
         print(f"[DEBUG] EXCEPTION: {e}")
