@@ -93,8 +93,9 @@ def auto_detect_slot(now):
     return (None, "all_sent")
 
 
-def get_today_editors():
-    """调用 kdocs-cli 获取今日版本历史编辑者集合。关键：必须传 --token！"""
+def get_editors_by_dates(dates):
+    """调用 kdocs-cli 获取指定日期集合的版本历史编辑者。关键：必须传 --token！
+    dates: date 对象列表；返回 {date: set(editors)}，API 失败时返回空集合"""
     try:
         all_versions = []
         pt = None
@@ -123,9 +124,8 @@ def get_today_editors():
             pt = inner.get("next_page_token")
             if not pt:
                 break
-        today = bj_now().date()
-        print(f"[DEBUG] total_versions={len(all_versions)} today(Beijing)={today}")
-        editors = set()
+        print(f"[DEBUG] total_versions={len(all_versions)} query_dates={dates}")
+        result_editors = {d: set() for d in dates}
         matched_times = []
         no_name_versions = []
         all_today_details = []
@@ -136,7 +136,7 @@ def get_today_editors():
             if mt > 1e12:
                 mt /= 1000
             vdate = datetime.datetime.fromtimestamp(mt, BJT).date()
-            if vdate == today:
+            if vdate in result_editors:
                 cb = v.get("created_by") or {}
                 mb = v.get("modified_by") or {}
                 tstr = datetime.datetime.fromtimestamp(mt, BJT).strftime("%H:%M:%S")
@@ -148,32 +148,39 @@ def get_today_editors():
                     nm = mb_name
                 all_today_details.append((tstr, cb_name, mb_name, nm))
                 if nm:
-                    editors.add(nm)
+                    result_editors[vdate].add(nm)
                     matched_times.append(tstr)
                 else:
                     no_name_versions.append({"time": tstr, "created_by": cb, "modified_by": mb})
-        print(f"[DEBUG] today_versions={len(all_today_details)} editors_found={editors}")
+        print(f"[DEBUG] matched_versions={len(all_today_details)}")
         print(f"[DEBUG] matched_times={matched_times[:30]}")
+        for d in dates:
+            print(f"[DEBUG] editors[{d}]={result_editors[d]}")
         if no_name_versions:
             print(f"[DEBUG] no_name_versions={len(no_name_versions)}")
             for nv in no_name_versions[:15]:
                 print(f"[DEBUG]   no_name: {nv}")
-        return editors
+        return result_editors
     except Exception as e:
         print(f"[DEBUG] EXCEPTION: {e}")
         traceback.print_exc()
-        return set()
+        return {d: set() for d in dates}
 
 
-def save_daily_editors(editors):
-    """将今日编辑者追加到状态中（取并集）"""
+def get_today_editors():
+    """兼容入口：仅获取今日编辑者"""
+    return get_editors_by_dates([bj_now().date()]).get(bj_now().date(), set())
+
+
+def save_daily_editors(editors, date_str=None):
+    """将编辑者追加到状态中（取并集）；date_str 缺省为今天"""
     s = load_state()
-    today = bj_now().strftime("%Y-%m-%d")
+    d = date_str or bj_now().strftime("%Y-%m-%d")
     if "daily_editors" not in s:
         s["daily_editors"] = {}
-    existing = set(s["daily_editors"].get(today, []))
+    existing = set(s["daily_editors"].get(d, []))
     existing.update(editors)
-    s["daily_editors"][today] = sorted(existing)
+    s["daily_editors"][d] = sorted(existing)
     save_state(s)
 
 
@@ -198,7 +205,7 @@ def build_meeting_message():
 """
 
 
-def build_message(slot, regions, today_editors):
+def build_message(slot, regions, today_editors, yesterday_editors=None):
     if slot == "meeting":
         return build_meeting_message()
     label, current_time, next_time = TIME_LABELS[slot]
@@ -213,9 +220,9 @@ def build_message(slot, regions, today_editors):
         lines.append(f"> 📝 今日编辑者：<font color='info'>**{editor_str}**</font>")
     else:
         lines.append(f"> 📝 今日暂无编辑记录")
-    # 早间提醒附加昨日编辑者
+    # 早间提醒附加昨日编辑者（优先实时查询结果，回退状态文件快照）
     if slot == "9":
-        yed = get_yesterday_editors()
+        yed = sorted(yesterday_editors) if yesterday_editors else get_yesterday_editors()
         if yed:
             lines.append(f"> 📅 昨日编辑者：<font color='comment'>**{'、'.join(yed)}**</font>")
         else:
@@ -244,8 +251,11 @@ def main():
     slot = sys.argv[1] if len(sys.argv) > 1 else "9"
     if slot == "debug":
         print("=== DEBUG MODE ===")
-        eds = get_today_editors()
-        print(f"Today editors: {eds}")
+        today = bj_now().date()
+        yesterday = today - datetime.timedelta(days=1)
+        eds_map = get_editors_by_dates([today, yesterday])
+        print(f"Today editors: {sorted(eds_map[today])}")
+        print(f"Yesterday editors: {sorted(eds_map[yesterday])}")
         s = load_state()
         print(f"State: {json.dumps(s, ensure_ascii=False)}")
         return
@@ -263,12 +273,22 @@ def main():
     try:
         data = load_data()
         eds = set()
+        yeds = set()
         if slot != "meeting":
-            eds = get_today_editors()
-            print(f"Editors: {eds}")
+            # 一次拉取版本历史，同时统计今日和昨日编辑者（昨日改为实时查询，
+            # 修复17:00后编辑的人在次日快照中丢失的问题）
+            today = bj_now().date()
+            yesterday = today - datetime.timedelta(days=1)
+            eds_map = get_editors_by_dates([today, yesterday])
+            eds = eds_map.get(today, set())
+            yeds = eds_map.get(yesterday, set())
+            print(f"Today editors: {sorted(eds)}")
+            print(f"Yesterday editors (realtime): {sorted(yeds)}")
             if eds:
                 save_daily_editors(eds)
-        msg = build_message(slot, data["regions"], eds)
+            if yeds:
+                save_daily_editors(yeds, yesterday.strftime("%Y-%m-%d"))
+        msg = build_message(slot, data["regions"], eds, yeds)
         result = send_wecom(msg)
         print(result)
         mark_slot_sent(slot)
